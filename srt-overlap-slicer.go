@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 type Subtitle struct {
@@ -53,15 +54,16 @@ func readOneSubtitle(scanner *bufio.Scanner) (*Subtitle, error) {
 	idxRaw := scanner.Text()
 	idx, err := strconv.Atoi(idxRaw)
 	if err != nil {
-		return nil, errors.New("invalid subtitle index")
+		return nil, fmt.Errorf("invalid subtitle index: %q", idxRaw)
 	}
 	// read timing
 	if !scanner.Scan() {
 		return nil, errors.New("could not find subtitle timing")
 	}
-	timing := timeFramePattern.FindStringSubmatch(scanner.Text())
+	timmingRaw := scanner.Text()
+	timing := timeFramePattern.FindStringSubmatch(timmingRaw)
 	if timing == nil {
-		return nil, errors.New("invalid subtitle timing")
+		return nil, fmt.Errorf("invalid subtitle timing: %q", timmingRaw)
 	}
 	fromTime := getDuration(timing[1:5])
 	toTime := getDuration(timing[5:9])
@@ -152,9 +154,48 @@ func readAllSubtittles(r io.Reader) []*Subtitle {
 		if len(subtitle.text) == 0 { // skip over empty subtitles
 			continue
 		}
+		subtitle.text = balanceText(subtitle.text, balanceThreshold)
 		subtitles = append(subtitles, subtitle)
 	}
 	return subtitles
+}
+
+const balanceThreshold = 50
+
+func balanceText(s string, threshold int) string {
+	if len(s) < threshold {
+		return s
+	}
+
+	buf := bytes.Buffer{}
+	lines := strings.Split(s, "\n")
+	var bs []string
+	for _, v := range lines {
+		if len(v) < threshold {
+			bs = []string{v}
+		} else {
+			bs = balanceLine(v)
+		}
+		for _, b := range bs {
+			if buf.Len() > 0 {
+				buf.WriteString("\n")
+			}
+			buf.WriteString(b)
+		}
+	}
+	return buf.String()
+}
+
+func balanceLine(s string) []string {
+	sz := len(s)
+	pos := sz / 2
+	runes := []rune(s)
+	for i := pos; i < sz; i++ {
+		if unicode.IsSpace(runes[i]) {
+			return []string{s[:i], s[i+1:]}
+		}
+	}
+	return []string{s}
 }
 
 func main() {

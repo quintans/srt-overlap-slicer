@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -183,4 +184,12 @@ This is the first line
 			require.Equal(t, tt.expect, result)
 		})
 	}
+}
+
+func TestBalance(t *testing.T) {
+	input := "This is a very very very big line that needs to be balanced.\nAnd this is the second line."
+	expected := "This is a very very very big line\nthat needs to be balanced.\nAnd this is the second line."
+
+	o := balanceText(input, 45)
+	assert.Equal(t, expected, o)
 }
