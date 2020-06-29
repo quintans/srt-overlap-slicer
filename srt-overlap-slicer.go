@@ -187,9 +187,9 @@ func balanceText(s string, threshold int) string {
 }
 
 func balanceLine(s string) []string {
-	sz := len(s)
-	pos := sz / 2
 	runes := []rune(s)
+	sz := len(runes)
+	pos := sz / 2
 	for i := pos; i < sz; i++ {
 		if unicode.IsSpace(runes[i]) {
 			return []string{s[:i], s[i+1:]}
