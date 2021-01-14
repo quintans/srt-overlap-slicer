@@ -17,6 +17,26 @@ func TestOneOverlap(t *testing.T) {
 		expect string
 	}{
 		{
+			name: "no overlap with BOM",
+			input: string(bom) + `1
+00:00:00,000 --> 00:00:01,000
+This is the first line
+
+2
+00:00:03,000 --> 00:00:04,000
+And this is the second line
+`,
+			expect: `1
+00:00:00,000 --> 00:00:01,000
+This is the first line
+
+2
+00:00:03,000 --> 00:00:04,000
+And this is the second line
+
+`,
+		},
+		{
 			name: "no overlap",
 			input: `1
 00:00:00,000 --> 00:00:01,000

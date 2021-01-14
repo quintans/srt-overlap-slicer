@@ -14,7 +14,6 @@ The same happens for SRTs. So, whenever a two subtitles overlap, a third subtitl
 
 ### Installation/Usage
 1. You need a recent version of `go`
-2. Clone repo, `cd` to repo folder, run `go build`
-3. This will create an executable named `srt-overlap-slicer`
-4. Run that executable on the SRT file.
-5. This will back up the original `.srt` with a `.bak` extension, and generate a cleaned SRT file
+2. Clone repo, `cd` to repo folder, run `go install`
+3. Run on the SRT file: `srt-overlap-slicer movie.srt`.
+4. This will back up the original `.srt` with a `.bak` extension, and generate a cleaned SRT file

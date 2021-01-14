@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"regexp"
 	"sort"
@@ -14,6 +15,8 @@ import (
 	"time"
 	"unicode"
 )
+
+const bom = '\uFEFF'
 
 type Subtitle struct {
 	idx      int
@@ -138,14 +141,25 @@ func slicer(r io.Reader, w io.Writer) {
 	}
 }
 
-func readAllSubtittles(r io.Reader) []*Subtitle {
-	scanner := bufio.NewScanner(r)
+func readAllSubtittles(rd io.Reader) []*Subtitle {
+	br := bufio.NewReader(rd)
+	r, _, err := br.ReadRune()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if r != bom {
+		br.UnreadRune() // Not a BOM -- put the rune back
+	}
+
+	scanner := bufio.NewScanner(br)
 	subtitles := []*Subtitle{}
 
+	count := 0
 	for {
+		count++
 		subtitle, err := readOneSubtitle(scanner)
 		if err != nil {
-			panic(err)
+			log.Fatalf("Error reading subtitle %d: %v", count, err)
 		}
 		if subtitle == nil {
 			break
@@ -201,18 +215,26 @@ func balanceLine(s string) []string {
 func main() {
 	if len(os.Args) < 2 {
 		println("Provide a subtitle file to fix.\ne.g. srt-overlap-fixer mysubtitle.srt")
-		return
+		os.Exit(0)
 	}
 
 	original := os.Args[1]
+	if original == "-v" {
+		println("Version: 1.0.0 (14/01/2021)")
+		os.Exit(0)
+	}
+
+	println("slicing subtitle " + original)
+
 	fixed := original + ".fixed"
 
 	file, _ := os.Open(original)
 	newFile, _ := os.Create(fixed)
-	defer file.Close()
-	defer newFile.Close()
 
 	slicer(file, newFile)
+
+	file.Close()
+	newFile.Close()
 
 	os.Rename(original, original+".bak")
 	os.Rename(fixed, original)
